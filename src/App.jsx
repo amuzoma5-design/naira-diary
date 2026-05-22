@@ -424,7 +424,71 @@ function BottomNav({active,onChange}){
     </nav>
   );
 }
+function InstallBanner() {
+  const [prompt, setPrompt] = useState(null);
+  const [visible, setVisible] = useState(false);
 
+  useEffect(() => {
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      setPrompt(e);
+      setVisible(true);
+    });
+    window.addEventListener("appinstalled", () => {
+      setVisible(false);
+    });
+  }, []);
+
+  const handleInstall = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === "accepted") setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div style={{
+      position: "fixed", bottom: 90, left: "50%",
+      transform: "translateX(-50%)",
+      width: "calc(100% - 32px)", maxWidth: 398,
+      background: C.white,
+      border: `2px solid ${C.blue}`,
+      borderRadius: 18, padding: "16px 18px",
+      display: "flex", alignItems: "center", gap: 14,
+      boxShadow: "0 8px 32px rgba(24,119,242,0.15)",
+      zIndex: 150,
+    }}>
+      <span style={{ fontSize: 32 }}>📲</span>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans'", fontSize: 14,
+          fontWeight: 700, color: C.text }}>Install NairaDiary</p>
+        <p style={{ fontSize: 12, color: C.sub, marginTop: 2 }}>
+          Add to home screen for quick access
+        </p>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <button onClick={handleInstall} style={{
+          background: C.blue, border: "none",
+          borderRadius: 10, padding: "8px 16px",
+          fontSize: 13, fontWeight: 700,
+          fontFamily: "'Plus Jakarta Sans'",
+          color: "#fff", whiteSpace: "nowrap",
+        }}>
+          Install
+        </button>
+        <button onClick={() => setVisible(false)} style={{
+          background: "none", border: "none",
+          fontSize: 12, color: C.sub, fontWeight: 500,
+          textAlign: "center",
+        }}>
+          Not now
+        </button>
+      </div>
+    </div>
+  );
+}
 /* ── APP ROOT ──────────────────────────────────────────────── */
 export default function NairaDiary(){
   const [session,setSession] = useState(null);
@@ -514,7 +578,7 @@ export default function NairaDiary(){
         {tab==="today"    &&<TodayScreen txns={txns} onDelete={handleDelete} loading={loading}/>}
         {tab==="insights" &&<InsightsScreen txns={txns} loading={loading}/>}
       </div>
-
+      <InstallBanner/>
       <Toast msg={toast.msg} visible={toast.visible} isError={toast.isError}/>
       <BottomNav active={tab} onChange={setTab}/>
     </div>
